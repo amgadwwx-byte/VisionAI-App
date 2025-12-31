@@ -43,23 +43,11 @@ const App: React.FC = () => {
     colorPalette: '#3b82f6',
   });
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
-  const [showLegalModal, setShowLegalModal] = useState(false);
-  const [hasConsented, setHasConsented] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [customEditPrompt, setCustomEditPrompt] = useState('');
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Auto-hide sidebar on mobile resize
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth <= 768) setIsSidebarOpen(false);
-      else setIsSidebarOpen(true);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     if (state.screen === 'splash') {
@@ -85,10 +73,6 @@ const App: React.FC = () => {
         isGenerating: false,
         results: images,
       }));
-      // Auto scroll to results on mobile
-      setTimeout(() => {
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-      }, 500);
     } catch (error) {
       alert("حدث خطأ أثناء التوليد. يرجى المحاولة مرة أخرى.");
       setState(prev => ({ ...prev, isGenerating: false }));
@@ -117,7 +101,7 @@ const App: React.FC = () => {
       rotation: 0,
       opacity: 1,
       isLocked: false,
-      width: window.innerWidth < 768 ? 250 : 400
+      width: 400
     };
     setState(prev => ({
       ...prev,
@@ -126,7 +110,6 @@ const App: React.FC = () => {
       selectedLayerId: newLayer.id,
       credits: prev.isPro ? prev.credits : prev.credits - 1
     }));
-    if (window.innerWidth < 768) setIsSidebarOpen(false);
   };
 
   const saveProject = () => {
@@ -141,28 +124,7 @@ const App: React.FC = () => {
       ...prev,
       savedProjects: [newProject, ...prev.savedProjects]
     }));
-    alert("تم حفظ المشروع بنجاح!");
-  };
-
-  const handleShare = async () => {
-    const lastLayer = state.layers.find(l => l.type === 'image');
-    if (!lastLayer) return;
-
-    if (navigator.share) {
-      try {
-        const blob = await fetch(lastLayer.content).then(r => r.blob());
-        const file = new File([blob], "VisionAI-Design.png", { type: 'image/png' });
-        await navigator.share({
-          files: [file],
-          title: 'تصميم VisionAI',
-          text: 'انظر ماذا صممت بواسطة VisionAI Studio!',
-        });
-      } catch (err) {
-        console.error("Share failed", err);
-      }
-    } else {
-      exportDesign();
-    }
+    alert("تم حفظ المشروع في مكتبتك بنجاح!");
   };
 
   const updateLayer = (id: string, updates: Partial<Layer>) => {
@@ -176,11 +138,11 @@ const App: React.FC = () => {
     const newLayer: Layer = {
       id: `txt-${Date.now()}`,
       type: 'text',
-      content: 'نص جديد',
+      content: 'اكتب نصك هنا',
       x: 50,
       y: 50,
       rotation: 0,
-      fontSize: 32,
+      fontSize: 48,
       color: '#ffffff',
       fontFamily: 'IBM Plex Sans Arabic',
       opacity: 1,
@@ -192,36 +154,8 @@ const App: React.FC = () => {
       layers: [...prev.layers, newLayer],
       selectedLayerId: newLayer.id
     }));
-    if (window.innerWidth < 768) setIsSidebarOpen(true);
   };
 
-  const handleCustomEdit = async () => {
-    if (!customEditPrompt) return;
-    const selectedLayer = state.layers.find(l => l.id === state.selectedLayerId);
-    if (!selectedLayer || selectedLayer.type !== 'image') return;
-
-    setState(prev => ({ ...prev, isGenerating: true }));
-    try {
-      const newUrl = await customImageEdit(selectedLayer.content, customEditPrompt);
-      updateLayer(selectedLayer.id, { content: newUrl });
-      setCustomEditPrompt(''); 
-      if (window.innerWidth < 768) setIsSidebarOpen(false);
-    } catch (error) {
-      alert("عذراً، لم نتمكن من تنفيذ هذا التعديل.");
-    } finally {
-      setState(prev => ({ ...prev, isGenerating: false }));
-    }
-  };
-
-  const exportDesign = () => {
-    const link = document.createElement('a');
-    const lastLayer = state.layers.find(l => l.type === 'image');
-    link.href = lastLayer?.content || '';
-    link.download = `VisionAI-${Date.now()}.png`;
-    link.click();
-  };
-
-  // --- Utility Functions for Logic ---
   const handleRemoveBg = async () => {
     const selectedLayer = state.layers.find(l => l.id === state.selectedLayerId);
     if (!selectedLayer || selectedLayer.type !== 'image') return;
@@ -246,35 +180,56 @@ const App: React.FC = () => {
     }
   };
 
-  // --- RENDERING ---
+  const handleCustomEdit = async () => {
+    if (!customEditPrompt) return;
+    const selectedLayer = state.layers.find(l => l.id === state.selectedLayerId);
+    if (!selectedLayer || selectedLayer.type !== 'image') return;
+
+    setState(prev => ({ ...prev, isGenerating: true }));
+    try {
+      const newUrl = await customImageEdit(selectedLayer.content, customEditPrompt);
+      updateLayer(selectedLayer.id, { content: newUrl });
+      setCustomEditPrompt(''); 
+    } catch (error) {
+      alert("عذراً، لم نتمكن من تنفيذ هذا التعديل.");
+    } finally {
+      setState(prev => ({ ...prev, isGenerating: false }));
+    }
+  };
+
+  const exportDesign = () => {
+    const link = document.createElement('a');
+    const lastLayer = state.layers.find(l => l.type === 'image');
+    link.href = lastLayer?.content || '';
+    link.download = `VisionAI-${Date.now()}.png`;
+    link.click();
+  };
 
   if (state.screen === 'splash') {
     return (
       <div className="h-screen w-full bg-[#020617] flex flex-col items-center justify-center text-white p-8">
-        <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center text-3xl font-bold shadow-2xl shadow-blue-500/40 animate-pulse mb-6">V</div>
-        <h1 className="text-3xl font-bold mb-2 tracking-tighter">VisionAI Studio</h1>
-        <p className="text-slate-500 text-sm">الإبداع بلا حدود</p>
+        <div className="w-24 h-24 bg-blue-600 rounded-3xl flex items-center justify-center text-4xl font-bold shadow-2xl shadow-blue-500/40 animate-pulse mb-8">V</div>
+        <h1 className="text-4xl font-bold mb-4 tracking-tighter">VisionAI Studio</h1>
+        <p className="text-slate-400 text-lg">حوّل أفكارك إلى تصاميم بالذكاء الاصطناعي</p>
       </div>
     );
   }
 
   if (state.screen === 'login') {
     return (
-      <div className="min-h-screen w-full bg-[#020617] flex items-center justify-center p-4 text-white" dir="rtl">
-        <div className="w-full max-w-sm bg-slate-900/50 border border-white/10 p-8 rounded-3xl shadow-2xl space-y-6 backdrop-blur-xl">
+      <div className="h-screen w-full bg-[#020617] flex items-center justify-center p-6 text-white" dir="rtl">
+        <div className="max-w-md w-full bg-slate-900/50 border border-white/10 p-10 rounded-[2.5rem] shadow-2xl space-y-8 backdrop-blur-xl">
           <div className="text-center space-y-2">
-            <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center text-xl font-bold mx-auto mb-2">V</div>
-            <h2 className="text-2xl font-bold">تسجيل الدخول</h2>
-            <p className="text-slate-400 text-sm">ابدأ رحلة الإبداع اليوم</p>
+            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-4">V</div>
+            <h2 className="text-3xl font-bold">تسجيل الدخول</h2>
+            <p className="text-slate-400">ابدأ رحلة الإبداع اليوم</p>
           </div>
-          <div className="space-y-3">
-            <button onClick={() => setState(prev => ({ ...prev, screen: 'home' }))} className="w-full py-4 bg-white text-black rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-100 transition-all active:scale-95 text-sm">
-               المتابعة كضيف
-            </button>
-            <button onClick={() => setState(prev => ({ ...prev, screen: 'home' }))} className="w-full py-4 bg-slate-800 text-white rounded-2xl font-bold hover:bg-slate-700 transition-all active:scale-95 text-sm">
-               تسجيل الدخول
-            </button>
-          </div>
+          <button 
+            onClick={() => setState(prev => ({ ...prev, screen: 'home' }))}
+            className="w-full py-4 bg-white text-black rounded-2xl font-bold hover:bg-slate-100 transition-colors"
+          >
+            المتابعة كضيف
+          </button>
         </div>
       </div>
     );
@@ -282,171 +237,167 @@ const App: React.FC = () => {
 
   if (state.screen === 'home') {
     return (
-      <div className="min-h-screen w-full bg-[#020617] text-white flex flex-col items-center overflow-x-hidden" dir="rtl">
-        <header className="w-full h-16 md:h-20 px-4 md:px-8 flex items-center justify-between border-b border-white/10 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
-          <div className="flex items-center gap-2">
-             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold">V</div>
-             <span className="text-lg font-bold hidden sm:inline">VisionAI</span>
+      <div className="h-screen w-full bg-[#020617] text-white flex flex-col items-center overflow-y-auto" dir="rtl">
+        <header className="w-full h-20 px-8 flex items-center justify-between border-b border-white/10 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl">V</div>
+             <span className="text-xl font-bold">VisionAI Studio</span>
           </div>
-          <div className="flex items-center gap-2 sm:gap-4">
-            <div className="bg-slate-800 px-3 py-1.5 rounded-full text-[10px] sm:text-xs border border-white/5">🪙 {state.credits}</div>
-            <button onClick={() => setState(prev => ({ ...prev, isPro: true }))} className="bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-1.5 rounded-full font-bold text-[10px] sm:text-xs">PRO</button>
+          <div className="flex items-center gap-6">
+            <div className="bg-slate-800 px-4 py-2 rounded-full text-sm border border-white/5">
+              🪙 رصيد: {state.credits}
+            </div>
+            <button 
+              onClick={() => setState(prev => ({ ...prev, isPro: true }))}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2 rounded-full font-bold text-sm"
+            >
+              الترقية لـ PRO
+            </button>
           </div>
         </header>
 
-        <main className="w-full max-w-4xl px-4 py-8 space-y-8 pb-20">
-           <section className="text-center space-y-2">
-             <h2 className="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">صمم خيالك</h2>
-             <p className="text-slate-400 text-sm">توليد تصاميم احترافية بضغطة زر</p>
+        <main className="max-w-5xl w-full px-6 py-12 space-y-12">
+           <section className="text-center space-y-4">
+             <h2 className="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">من الخيال إلى الواقع</h2>
+             <p className="text-slate-400 text-lg">استخدم قوة الذكاء الاصطناعي لتوليد تصاميم احترافية مذهلة.</p>
            </section>
 
-           <section className="bg-slate-900/40 border border-white/5 p-5 sm:p-8 rounded-3xl space-y-6">
-             <div className="space-y-2">
-               <label className="text-xs font-bold text-slate-500">وصف فكرتك</label>
+           <section className="bg-slate-900/40 border border-white/5 p-8 rounded-[3rem] shadow-2xl space-y-8 backdrop-blur-sm">
+             <div className="space-y-4">
+               <label className="text-sm font-bold text-slate-300">أدخل وصفاً لفكرتك</label>
                <textarea 
                  value={config.prompt}
                  onChange={e => setConfig({...config, prompt: e.target.value})}
-                 placeholder="مثلاً: شعار لشركة تكنولوجيا..."
-                 className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl p-4 text-base focus:ring-2 focus:ring-blue-500 outline-none h-32 resize-none"
+                 placeholder="مثلاً: شعار لشركة تكنولوجيا بأسلوب مستقبلي..."
+                 className="w-full bg-slate-950/80 border border-slate-800 rounded-3xl p-6 text-xl focus:ring-4 focus:ring-blue-600/20 outline-none h-36 resize-none"
                />
              </div>
 
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                   <label className="text-xs font-bold text-slate-500">النوع</label>
-                   <div className="grid grid-cols-2 gap-2">
-                     {DESIGN_TYPES.slice(0, 4).map(t => (
-                       <button key={t.id} onClick={() => setConfig({...config, type: t.id as DesignType})} className={`p-3 rounded-xl border text-xs transition-all ${config.type === t.id ? 'bg-blue-600 border-blue-400' : 'bg-slate-950 border-slate-800'}`}>{t.label}</button>
-                     ))}
-                   </div>
-                </div>
-                <div className="space-y-2">
-                   <label className="text-xs font-bold text-slate-500">المقاس</label>
-                   <div className="grid grid-cols-2 gap-2">
-                     {ASPECT_RATIOS.map(r => (
-                       <button key={r.id} onClick={() => setConfig({...config, aspectRatio: r.id as any})} className={`p-3 rounded-xl border text-xs transition-all ${config.aspectRatio === r.id ? 'bg-purple-600 border-purple-400' : 'bg-slate-950 border-slate-800'}`}>{r.label}</button>
-                     ))}
-                   </div>
-                </div>
+             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+               <div className="space-y-2">
+                 <label className="text-xs font-bold text-slate-500">نوع التصميم</label>
+                 <select className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm outline-none" value={config.type} onChange={e => setConfig({...config, type: e.target.value as DesignType})}>
+                   {DESIGN_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                 </select>
+               </div>
+               <div className="space-y-2 col-span-2">
+                 <label className="text-xs font-bold text-slate-500">الأسلوب الفني</label>
+                 <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                   {DESIGN_STYLES.map(s => (
+                     <button key={s.id} onClick={() => setConfig({...config, style: s.id as DesignStyle})} className={`p-2 rounded-xl border text-xs transition-all ${config.style === s.id ? 'bg-blue-600 border-blue-400' : 'bg-slate-950 border-slate-800'}`}>
+                       {s.label}
+                     </button>
+                   ))}
+                 </div>
+               </div>
+               <div className="space-y-2">
+                 <label className="text-xs font-bold text-slate-500">المقاس</label>
+                 <select className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm outline-none" value={config.aspectRatio} onChange={e => setConfig({...config, aspectRatio: e.target.value as any})}>
+                   {ASPECT_RATIOS.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+                 </select>
+               </div>
              </div>
 
-             <button onClick={handleGenerate} disabled={state.isGenerating || !config.prompt} className={`w-full py-5 rounded-2xl font-black text-lg transition-all active:scale-95 ${state.isGenerating ? 'bg-slate-800' : 'bg-blue-600 shadow-xl shadow-blue-600/20'}`}>
-               {state.isGenerating ? "جاري التوليد..." : "توليد التصميم ✨"}
-             </button>
-             
-             <button onClick={() => fileInputRef.current?.click()} className="w-full py-4 rounded-2xl font-bold bg-slate-800 text-sm border border-white/5 transition-all">
-                📂 رفع صورة للتعديل
-             </button>
-             <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+             <div className="flex flex-col md:flex-row gap-4">
+               <button 
+                 onClick={handleGenerate}
+                 disabled={state.isGenerating || !config.prompt}
+                 className="flex-1 py-6 rounded-3xl font-black text-2xl bg-blue-600 hover:bg-blue-500 shadow-2xl shadow-blue-600/30 transition-all flex items-center justify-center gap-4"
+               >
+                 {state.isGenerating ? "جاري التوليد..." : "توليد التصميم ✨"}
+               </button>
+               <button onClick={() => fileInputRef.current?.click()} className="md:w-1/3 py-6 rounded-3xl font-bold text-xl bg-slate-800 hover:bg-slate-700 transition-all">رفع صورة</button>
+               <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+             </div>
            </section>
 
            {state.results.length > 0 && (
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-               {state.results.map((img, i) => (
-                 <div key={i} className="rounded-2xl overflow-hidden bg-slate-900 border border-white/10 group relative">
-                    <img src={img} className="w-full aspect-square object-cover" />
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity p-4">
-                       <button onClick={() => startEditing(img)} className="w-full bg-white text-black py-3 rounded-xl font-bold">تعديل الآن</button>
-                    </div>
-                 </div>
-               ))}
-             </div>
+             <section className="space-y-8">
+               <h3 className="text-3xl font-bold">النتائج المقترحة</h3>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 {state.results.map((img, i) => (
+                   <div key={i} className="group relative rounded-[2.5rem] overflow-hidden bg-slate-900 aspect-square">
+                     <img src={img} alt="Result" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-10 gap-4">
+                       <button onClick={() => startEditing(img)} className="w-full bg-white text-black py-4 rounded-2xl font-bold">تعديل واحتراف</button>
+                       <button onClick={saveProject} className="w-full bg-slate-800 py-3 rounded-xl font-bold">حفظ</button>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+             </section>
            )}
         </main>
       </div>
     );
   }
 
-  // --- EDITOR SCREEN ---
   const selectedLayer = state.layers.find(l => l.id === state.selectedLayerId);
 
   return (
-    <div className="flex h-screen w-full bg-slate-950 text-slate-100 overflow-hidden relative" dir="rtl">
-      {/* Drawer Overlay for Mobile */}
-      {isSidebarOpen && window.innerWidth < 768 && (
-        <div className="fixed inset-0 bg-black/50 z-[60] backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)}></div>
-      )}
-
-      {/* Sidebar / Drawer */}
-      <aside className={`fixed md:relative top-0 right-0 h-full ${isSidebarOpen ? 'w-[85vw] md:w-80 translate-x-0' : 'w-0 translate-x-full md:w-0'} transition-all duration-300 bg-slate-900 border-l border-slate-800 flex flex-col z-[70] shadow-2xl overflow-y-auto custom-scrollbar`}>
-        <div className="p-6 space-y-6">
+    <div className="flex h-screen w-full bg-slate-950 text-slate-100 overflow-hidden" dir="rtl">
+      <aside className={`${isSidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 bg-slate-900 border-l border-slate-800 flex flex-col overflow-y-auto z-50`}>
+        <div className="p-6 space-y-8">
           <div className="flex items-center justify-between">
-            <h2 className="font-bold text-blue-400">أدوات التحكم</h2>
-            <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 text-slate-500">✕</button>
+            <h1 className="text-lg font-bold">المحرر الذكي</h1>
+            <button onClick={() => setState(prev => ({ ...prev, screen: 'home' }))} className="p-2 hover:bg-slate-800 rounded-lg">✕</button>
           </div>
 
           {selectedLayer ? (
-            <div className="space-y-6 animate-in slide-in-from-right-4">
+            <div className="space-y-6 animate-in slide-in-from-left-4">
               {selectedLayer.type === 'text' && (
                 <div className="space-y-4">
-                  <textarea className="w-full bg-slate-800 rounded-xl p-3 text-sm outline-none border border-slate-700 h-20" value={selectedLayer.content} onChange={e => updateLayer(selectedLayer.id, { content: e.target.value })} />
-                  <div className="grid grid-cols-2 gap-2">
-                    <input type="color" className="w-full h-10 rounded-lg bg-slate-800" value={selectedLayer.color} onChange={e => updateLayer(selectedLayer.id, { color: e.target.value })} />
-                    <select className="bg-slate-800 rounded-lg text-xs" value={selectedLayer.fontFamily} onChange={e => updateLayer(selectedLayer.id, { fontFamily: e.target.value })}>
-                       {FONT_FAMILIES.map(f => <option key={f} value={f}>{f}</option>)}
-                    </select>
-                  </div>
+                  <textarea className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-sm" value={selectedLayer.content} onChange={e => updateLayer(selectedLayer.id, { content: e.target.value })} />
+                  <input type="color" className="w-full h-10 bg-slate-800 rounded-lg" value={selectedLayer.color} onChange={e => updateLayer(selectedLayer.id, { color: e.target.value })} />
                 </div>
               )}
 
               {selectedLayer.type === 'image' && (
-                <div className="space-y-2">
-                   <button onClick={handleRemoveBg} className="w-full py-3 bg-indigo-600 rounded-xl text-xs font-bold">إزالة الخلفية</button>
-                   <button onClick={handleUpscale} className="w-full py-3 bg-slate-800 rounded-xl text-xs font-bold border border-white/5">تحسين الجودة</button>
-                   
-                   <div className="pt-4 space-y-3">
-                      <label className="text-[10px] text-slate-500 font-bold uppercase">تعديل ذكي مخصص</label>
-                      <textarea 
-                        value={customEditPrompt}
-                        onChange={e => setCustomEditPrompt(e.target.value)}
-                        placeholder="مثلاً: اجعل الخلفية ممطرة..."
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs min-h-[80px]"
-                      />
-                      <button onClick={handleCustomEdit} className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl text-xs font-bold">تنفيذ</button>
+                <div className="space-y-4">
+                   <button onClick={handleRemoveBg} disabled={state.isGenerating} className="w-full py-4 bg-indigo-600 rounded-2xl text-xs font-bold">🧠 إزالة الخلفية</button>
+                   <button onClick={handleUpscale} disabled={state.isGenerating} className="w-full py-4 bg-slate-800 rounded-2xl text-xs font-bold">✨ تحسين الجودة</button>
+                   <div className="space-y-2 pt-4">
+                     <label className="text-[10px] text-slate-500 font-bold">تعديل ذكي مخصص</label>
+                     <textarea value={customEditPrompt} onChange={e => setCustomEditPrompt(e.target.value)} placeholder="مثلاً: غير اللون..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs h-24" />
+                     <button onClick={handleCustomEdit} className="w-full py-3 bg-purple-600 rounded-xl text-xs font-bold">تطبيق</button>
                    </div>
                 </div>
               )}
 
-              <div className="space-y-4 pt-4 border-t border-slate-800">
-                <div className="space-y-1">
-                  <label className="text-[10px] text-slate-500">الحجم</label>
-                  <input type="range" min="10" max="800" className="w-full accent-blue-500" value={selectedLayer.width || selectedLayer.fontSize} onChange={e => updateLayer(selectedLayer.id, selectedLayer.type === 'image' ? { width: Number(e.target.value) } : { fontSize: Number(e.target.value) })} />
+              <div className="space-y-6 pt-4 border-t border-slate-800">
+                <div className="space-y-2">
+                  <label className="text-xs text-slate-500">الحجم</label>
+                  <input type="range" min="10" max="1000" className="w-full accent-blue-500" value={selectedLayer.width || selectedLayer.fontSize} onChange={e => updateLayer(selectedLayer.id, selectedLayer.type === 'image' ? { width: Number(e.target.value) } : { fontSize: Number(e.target.value) })} />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] text-slate-500">الشفافية</label>
+                <div className="space-y-2">
+                  <label className="text-xs text-slate-500">الشفافية</label>
                   <input type="range" min="0" max="1" step="0.1" className="w-full accent-blue-500" value={selectedLayer.opacity} onChange={e => updateLayer(selectedLayer.id, { opacity: Number(e.target.value) })} />
                 </div>
               </div>
-              <button onClick={() => setState(prev => ({ ...prev, layers: prev.layers.filter(l => l.id !== selectedLayer.id), selectedLayerId: null }))} className="w-full py-3 text-red-500 bg-red-500/10 rounded-xl text-xs font-bold">حذف العنصر</button>
+              <button onClick={() => setState(prev => ({ ...prev, layers: prev.layers.filter(l => l.id !== selectedLayer.id), selectedLayerId: null }))} className="w-full py-3 bg-red-600/10 text-red-500 rounded-xl text-xs font-bold">حذف العنصر</button>
             </div>
           ) : (
-            <p className="text-center text-slate-500 text-xs py-10">اختر عنصراً للتعديل</p>
+            <p className="p-8 text-center text-slate-500 text-xs">اضغط على عنصر لبدء التعديل</p>
           )}
         </div>
       </aside>
 
-      {/* Main Canvas Area */}
-      <main className="flex-1 flex flex-col relative overflow-hidden h-full">
-        <header className="h-14 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between px-4 z-20">
-          <div className="flex items-center gap-2">
+      <main className="flex-1 flex flex-col relative overflow-hidden">
+        <header className="h-16 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between px-6 z-20">
+          <div className="flex items-center gap-4">
             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-slate-800 rounded-lg">⚙️</button>
-            <button onClick={addTextLayer} className="p-2 bg-slate-800 rounded-lg">➕ T</button>
-            <button onClick={() => setState(prev => ({ ...prev, screen: 'home' }))} className="p-2 bg-slate-800 rounded-lg">🏠</button>
+            <button onClick={addTextLayer} className="px-4 py-2 bg-slate-800 rounded-xl text-sm font-bold">➕ نص</button>
           </div>
-          <div className="flex items-center gap-2">
-             <button onClick={handleShare} className="px-4 py-2 bg-blue-600 rounded-full text-xs font-bold">مشاركة</button>
-          </div>
+          <button onClick={exportDesign} className="px-8 py-2 bg-blue-600 rounded-full text-sm font-black shadow-xl shadow-blue-600/30">تصدير</button>
         </header>
 
-        <div className="flex-1 bg-slate-950 flex items-center justify-center p-4 md:p-10 overflow-auto touch-none">
+        <div className="flex-1 overflow-auto flex items-center justify-center p-20 bg-[#020617]" onMouseDown={() => setState(prev => ({ ...prev, selectedLayerId: null }))}>
           <div 
             ref={canvasRef}
-            className="relative bg-[#0a0f1e] shadow-2xl overflow-hidden shrink-0 border border-white/5"
+            className="relative bg-[#0a0f1e] shadow-2xl overflow-hidden ring-1 ring-white/10"
             style={{
-              width: window.innerWidth < 768 ? '300px' : config.aspectRatio === '1:1' ? '600px' : '800px',
-              height: window.innerWidth < 768 ? (config.aspectRatio === '9:16' ? '533px' : '300px') : config.aspectRatio === '1:1' ? '600px' : '450px',
-              maxWidth: '90vw',
-              maxHeight: '70vh'
+              width: config.aspectRatio === '1:1' ? '600px' : config.aspectRatio === '16:9' ? '800px' : '450px',
+              height: config.aspectRatio === '1:1' ? '600px' : config.aspectRatio === '16:9' ? '450px' : '800px',
             }}
           >
             {state.layers.map(layer => (
@@ -460,9 +411,8 @@ const App: React.FC = () => {
             ))}
             
             {state.isGenerating && (
-              <div className="absolute inset-0 z-[100] bg-black/60 flex flex-col items-center justify-center gap-4 text-center p-6">
-                 <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                 <p className="text-sm font-bold">الذكاء الاصطناعي يعمل...</p>
+              <div className="absolute inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center">
+                 <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
           </div>
@@ -472,9 +422,6 @@ const App: React.FC = () => {
       <style>{`
         .animate-in { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        /* Disable text selection and bounce for mobile UI feel */
-        * { -webkit-user-select: none; touch-action: manipulation; }
-        input, textarea { -webkit-user-select: text; touch-action: auto; }
       `}</style>
     </div>
   );
