@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Copy of VisionAI Designer",
+  "description": "A comprehensive AI-powered design studio that transforms text prompts into professional logos, social media graphics, and artistic images with built-in editing tools.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
