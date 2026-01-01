@@ -1,12 +1,77 @@
 <!DOCTYPE html>
-<html lang="ar">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VisionAI - تصميمي الخاص</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VisionAI Designer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #020617; color: white; font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; overflow: hidden; }
+        .sidebar { width: 260px; background: #0f172a; border-left: 1px solid #1e293b; display: flex; flex-direction: column; }
+        .main-content { flex: 1; display: flex; flex-direction: column; background: #020617; }
+        .glass-card { background: #1e293b; border: 1px solid #334155; border-radius: 16px; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar p-4 hidden md:flex">
+        <h2 class="text-xl font-bold text-sky-400 mb-8 px-2">VisionAI App</h2>
+        <nav class="space-y-2">
+            <div class="bg-sky-500/10 text-sky-400 p-3 rounded-xl cursor-pointer">لوحة التحكم</div>
+            <div class="text-gray-400 p-3 hover:bg-slate-800 rounded-xl cursor-pointer">تاريخ الصور</div>
+            <div class="text-gray-400 p-3 hover:bg-slate-800 rounded-xl cursor-pointer">الإعدادات</div>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header class="p-4 border-b border-slate-800 flex justify-between items-center">
+            <span class="md:hidden text-sky-400 font-bold">VisionAI</span>
+            <div class="flex gap-4">
+                <button class="bg-slate-800 px-4 py-2 rounded-lg text-sm">حفظ المشروع</button>
+            </div>
+        </header>
+
+        <div class="p-6 flex-1 overflow-y-auto">
+            <div class="max-w-3xl mx-auto space-y-6">
+                <div class="glass-card aspect-square w-full flex items-center justify-center relative overflow-hidden border-2 border-dashed border-slate-700">
+                    <img id="resultImg" class="hidden w-full h-full object-cover" />
+                    <div id="loader" class="text-slate-500 text-center">
+                        <p>اكتب وصفاً ثم اضغط على زر التوليد بالأسفل</p>
+                    </div>
+                </div>
+
+                <div class="glass-card p-4 space-y-4">
+                    <textarea id="promptText" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-sky-500 outline-none" rows="3" placeholder="مثال: رائد فضاء يركب خيلاً في المجرة..."></textarea>
+                    <button onclick="startGeneration()" id="actionBtn" class="w-full bg-sky-500 hover:bg-sky-400 py-4 rounded-xl font-bold text-slate-900 transition-all">توليد التصميم الآن</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        async function startGeneration() {
+            const prompt = document.getElementById('promptText').value;
+            const btn = document.getElementById('actionBtn');
+            const img = document.getElementById('resultImg');
+            const loader = document.getElementById('loader');
+
+            if(!prompt) return alert("اكتب وصفاً أولاً");
+
+            btn.disabled = true;
+            btn.innerText = "جاري الاتصال بالذكاء الاصطناعي...";
+            loader.innerHTML = "<div class='animate-spin rounded-full h-12 w-12 border-t-2 border-sky-500 mx-auto mb-4'></div><p>يتم الآن رسم خيالك...</p>";
+            img.classList.add('hidden');
+
+            const seed = Math.floor(Math.random() * 99999);
+            const url = `https://pollinations.ai/p/${encodeURIComponent(prompt)}?width=1024&height=1024&seed=${seed}`;
+
+            img.src = url;
+            img.onload = () => {
+                img.classList.remove('hidden');
+                loader.classList.add('hidden');
+                btn.disabled = false;
+                btn.innerText = "توليد التصميم الآن";
+            };
+        }
+    </script>
+</body>
 </html>
