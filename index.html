@@ -1,13 +1,43 @@
 <!DOCTYPE html>
-<html lang="ar">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VisionAI Designer</title>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VisionAI Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="./src/main.tsx"></script>
-  </body>
+    <style>
+        body { background-color: #0f172a; color: white; font-family: sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-bold text-sky-400">VisionAI Studio</h1>
+            <div class="bg-sky-500/20 text-sky-400 px-4 py-1 rounded-full text-sm">متصل</div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1 space-y-4">
+                <div class="glass p-6 rounded-2xl">
+                    <label class="block mb-2 text-sm text-gray-400">وصف الصورة (Prompt)</label>
+                    <textarea class="w-full bg-slate-800 border-none rounded-xl p-3 text-white focus:ring-2 focus:ring-sky-500 h-32" placeholder="اكتب ما تريد تخيله هنا..."></textarea>
+                    
+                    <button class="w-full bg-sky-500 hover:bg-sky-400 mt-4 py-3 rounded-xl font-bold transition-all shadow-lg shadow-sky-500/20">
+                        توليد الصورة
+                    </button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2">
+                <div class="glass h-[400px] rounded-3xl flex flex-col items-center justify-center border-dashed border-2 border-gray-700">
+                    <div class="text-gray-500 text-center">
+                        <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <p>الصورة ستظهر هنا بعد كتابة الوصف</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
 </html>
