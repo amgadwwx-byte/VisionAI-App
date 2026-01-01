@@ -1,50 +1,22 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#020617">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>VisionAI Designer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VisionAI Studio</title>
     <style>
-        :root {
-            --app-bg: #020617;
-            --accent: #3b82f6;
-        }
-        body {
-            font-family: 'IBM Plex Sans Arabic', sans-serif;
-            background-color: var(--app-bg);
-            color: #f8fafc;
-            overflow: hidden;
-            -webkit-tap-highlight-color: transparent;
-        }
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 10px;
-        }
+        body { background-color: #0f172a; color: white; text-align: center; font-family: sans-serif; padding-top: 100px; margin: 0; }
+        .container { border: 2px solid #38bdf8; padding: 40px; margin: 20px; border-radius: 20px; background: #1e293b; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h1 { color: #38bdf8; font-size: 2.5em; }
+        p { font-size: 1.2em; color: #94a3b8; }
+        .btn { background: #38bdf8; color: #0f172a; border: none; padding: 15px 40px; border-radius: 50px; font-weight: bold; font-size: 1.1em; cursor: pointer; margin-top: 20px; }
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
-  }
-}
-</script>
 </head>
 <body>
-    <div id="root"></div>
+    <div class="container">
+        <h1>VisionAI Studio</h1>
+        <p>تم تحديث تطبيقك بنجاح! أنت الآن جاهز للإبداع.</p>
+        <button class="btn">ابدأ الآن</button>
+    </div>
 </body>
 </html>
